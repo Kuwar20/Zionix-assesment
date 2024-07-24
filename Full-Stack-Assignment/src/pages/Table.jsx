@@ -10,10 +10,14 @@ const InputForm = () => {
 
     const convertToINR = (price, currency) => {
         const rates = {
-            USD: 84,
-            EUR: 90
+            USD: 84, // Example rate for USD to INR
+            EUR: 90, // Example rate for EUR to INR
+            INR: 1   // Conversion rate for INR to INR is 1
         };
-        return price * (rates[currency] || 1);
+        const rate = rates[currency] || 1; // Default to 1 if currency is not found
+        // Extract numeric value from price if it's formatted with currency symbol
+        const numericPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
+        return numericPrice * rate;
     };
 
     const fetchData = async () => {
