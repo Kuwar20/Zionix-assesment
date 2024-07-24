@@ -16,14 +16,34 @@ const InputForm = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
 
     const convertToINR = (price, currency) => {
-        const rates = {
-            USD: 84, // Example rate for USD to INR
-            EUR: 90, // Example rate for EUR to INR
-            INR: 1   // Conversion rate for INR to INR is 1
+        // Convert price to a number if it's a string
+        let numericPrice = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.-]+/g, "")) : price;
+    
+        // Check if the conversion resulted in a valid number
+        if (isNaN(numericPrice)) {
+            console.error('Invalid price format:', price);
+            return 0; // or handle this error as appropriate for your application
+        }
+    
+        // Conversion rates (you should use up-to-date rates)
+        const conversionRates = {
+            'USD': 84, // 1 USD = 74.5 INR (example rate)
+            'EUR': 90, // 1 EUR = 88.5 INR (example rate)
+            // Add other currencies as needed
         };
-        const rate = rates[currency] || 1; // Default to 1 if currency is not found
-        const numericPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
-        return numericPrice * rate;
+    
+        // Convert to INR if not already in INR
+        if (currency !== 'INR') {
+            if (conversionRates[currency]) {
+                numericPrice *= conversionRates[currency];
+            } else {
+                console.error('Unsupported currency:', currency);
+                return 0; // or handle this error as appropriate
+            }
+        }
+    
+        // Round to 2 decimal places
+        return Math.round(numericPrice * 100) / 100;
     };
 
     const fetchData = async () => {
@@ -67,20 +87,58 @@ const InputForm = () => {
             }));
 
             // Process Element14 data
-            const element14Data = (responses[2].data.products || []).map(part => ({
-                dataProvider: 'Element14',
-                manufacturerPartNumber: part.sku, // Assuming SKU is the part number
-                manufacturer: part.vendorName,
-                volume: volume,
-                unitPrice: convertToINR(part.prices[0].price, 'USD'), // Assuming the first price is the relevant one
-                totalPrice: convertToINR(part.prices[0].price, 'USD') * volume
-            }));
+            const element14Data = (responses[2].data.manufacturerPartNumberSearchReturn.products || []).map(part => {
+                const price = part.prices[0].cost; // The API returns 'cost', not 'price'
+                return {
+                    dataProvider: 'Element14',
+                    manufacturerPartNumber: part.translatedManufacturerPartNumber, // The API uses this field for the part number
+                    manufacturer: part.vendorName,
+                    volume: volume,
+                    unitPrice: convertToINR(price, 'USD'),
+                    totalPrice: convertToINR(price, 'USD') * volume
+                };
+            });
+
+            console.log(element14Data);
+            console.log(rutronikData);
+            console.log(mouserData);
+            // handle duplicate data
 
             // Combine and sort results
             const allResults = [...mouserData, ...rutronikData, ...element14Data];
             allResults.sort((a, b) => a.totalPrice - b.totalPrice);
-
+            
             setResults(allResults);
+            try {
+                // ... (your other API calls)
+        
+                const element14Response = await axios.get(`https://api.element14.com//catalog/products?term=manuPartNum:${partNumber}&storeInfo.id=in.element14.com&resultsSettings.offset=0&resultsSettings.numberOfResults=1&resultsSettings.refinements.filters=inStock&resultsSettings.responseGroup=medium&callInfo.omitXmlSchema=false&callInfo.callback=&callInfo.responseDataFormat=json&callinfo.apiKey=${ELEMENT14_API_KEY}`);
+        
+                console.log('Element14 API Response:', element14Response);
+        
+                // Process Element14 data
+                const element14Data = (element14Response.data.manufacturerPartNumberSearchReturn.products || []).map(part => ({
+                    dataProvider: 'Element14',
+                    manufacturerPartNumber: part.translatedManufacturerPartNumber,
+                    manufacturer: part.vendorName,
+                    volume: volume,
+                    unitPrice: convertToINR(part.prices[0].cost, 'USD'), // Assuming the price is in USD
+                    totalPrice: convertToINR(part.prices[0].cost, 'USD') * volume
+                }));
+        
+                console.log('Processed Element14 Data:', element14Data);
+        
+                // ... (process other API responses)
+        
+                // Combine and sort results
+                const allResults = [...mouserData, ...rutronikData, ...element14Data];
+                allResults.sort((a, b) => a.totalPrice - b.totalPrice);
+        
+                setResults(allResults);
+            } catch (error) {
+                console.error('Error in fetchData:', error);
+                setError(error);
+            }
         } catch (error) {
             setError(error);
         } finally {
