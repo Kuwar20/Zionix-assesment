@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaShoppingCart, FaSearch, FaTimesCircle } from 'react-icons/fa';
 
+const MOUSER_API_KEY = import.meta.env.VITE_MOUSER_API_KEY;
+const RUTRONIK_API_KEY = import.meta.env.VITE_RUTRONIK_API_KEY;
+const ELEMENT14_API_KEY = import.meta.env.VITE_ELEMENT14_API_KEY;
+
 const InputForm = () => {
     const [partNumber, setPartNumber] = useState('');
     const [volume, setVolume] = useState('');
@@ -28,7 +32,7 @@ const InputForm = () => {
 
         try {
             const responses = await Promise.all([
-                axios.post('https://api.mouser.com/api/v1/search/partnumber?apiKey=82675baf-9a58-4d5a-af3f-e3bbcf486560', {
+                axios.post(`https://api.mouser.com/api/v1/search/partnumber?apiKey=${MOUSER_API_KEY}`, {
                     "SearchByPartRequest": {
                         "mouserPartNumber": partNumber,
                         "partSearchOptions": "string"
@@ -38,8 +42,8 @@ const InputForm = () => {
                         'Content-Type': 'application/json'
                     }
                 }),
-                axios.get(`https://www.rutronik24.com/api/search/?apikey=cc6qyfg2yfis&searchterm=${partNumber}`),
-                axios.get(`http://api.element14.com//catalog/products?term=manuPartNum:${partNumber}&storeInfo.id=in.element14.com&resultsSettings.offset=0&resultsSettings.numberOfResults=1&resultsSettings.refinements.filters=inStock&resultsSettings.responseGroup=medium&callInfo.omitXmlSchema=false&callInfo.callback=&callInfo.responseDataFormat=json&callinfo.apiKey=wb9wt295qf3g6m842896hh2u`)
+                axios.get(`https://www.rutronik24.com/api/search/?apikey=${RUTRONIK_API_KEY}&searchterm=${partNumber}`),
+                axios.get(`http://api.element14.com//catalog/products?term=manuPartNum:${partNumber}&storeInfo.id=in.element14.com&resultsSettings.offset=0&resultsSettings.numberOfResults=1&resultsSettings.refinements.filters=inStock&resultsSettings.responseGroup=medium&callInfo.omitXmlSchema=false&callInfo.callback=&callInfo.responseDataFormat=json&callinfo.apiKey=${ELEMENT14_API_KEY}`)
             ]);
 
             // Process Mouser data
@@ -108,15 +112,15 @@ const InputForm = () => {
         <div className="min-h-screen flex flex-col bg-gray-100">
         <nav className="bg-blue-600 text-white p-4 shadow-md">
             <div className="container mx-auto flex justify-between items-center">
-                <h1 className="text-2xl font-bold">PartFinder Pro</h1>
-                <button onClick={() => setIsCartOpen(!isCartOpen)} className="flex items-center bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition duration-300">
+                <h1 className="text-2xl font-bold px-10">PartFinder</h1>
+                <button onClick={() => setIsCartOpen(!isCartOpen)} className="mr-10 flex items-center bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition duration-300">
                     <FaShoppingCart className="mr-2" /> My Cart
                 </button>
             </div>
         </nav>
 
-        <div className="container mx-auto p-8">
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-8 mx-auto w-full md:w-1/2">
+        <div className="container mx-auto p-8 mt-8">
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-8 mx-auto w-full ">
                 <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">Search Part Number</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
@@ -166,7 +170,7 @@ const InputForm = () => {
             )}
 
             {results && (
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden mx-auto w-full md:w-3/4">
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden mx-auto w-full">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
