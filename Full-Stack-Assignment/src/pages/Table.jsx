@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { FaShoppingCart, FaSearch, FaTimesCircle } from 'react-icons/fa';
 
@@ -43,7 +43,7 @@ const InputForm = () => {
                     }
                 }),
                 axios.get(`https://www.rutronik24.com/api/search/?apikey=${RUTRONIK_API_KEY}&searchterm=${partNumber}`),
-                axios.get(`http://api.element14.com//catalog/products?term=manuPartNum:${partNumber}&storeInfo.id=in.element14.com&resultsSettings.offset=0&resultsSettings.numberOfResults=1&resultsSettings.refinements.filters=inStock&resultsSettings.responseGroup=medium&callInfo.omitXmlSchema=false&callInfo.callback=&callInfo.responseDataFormat=json&callinfo.apiKey=${ELEMENT14_API_KEY}`)
+                axios.get(`https://api.element14.com//catalog/products?term=manuPartNum:${partNumber}&storeInfo.id=in.element14.com&resultsSettings.offset=0&resultsSettings.numberOfResults=1&resultsSettings.refinements.filters=inStock&resultsSettings.responseGroup=medium&callInfo.omitXmlSchema=false&callInfo.callback=&callInfo.responseDataFormat=json&callinfo.apiKey=${ELEMENT14_API_KEY}`)
             ]);
 
             // Process Mouser data
