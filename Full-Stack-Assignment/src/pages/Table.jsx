@@ -74,13 +74,24 @@ const InputForm = () => {
             // Track unique entries
             const uniqueEntries = new Map();
     
+            // Function to filter exact matches
+            const filterExactMatches = (data, searchedPartNumber) => {
+                return data.filter(part => part.manufacturerPartNumber.toUpperCase() === searchedPartNumber.toUpperCase());
+            };
+    
             // Function to add data to uniqueEntries
-            const addUniqueEntries = (dataProvider, data) => {
+            const addUniqueEntries = (dataProvider, data, searchedPartNumber) => {
                 data.forEach(part => {
-                    // Create a unique key based on provider, part number, and unit price
-                    const key = `${dataProvider}-${part.manufacturerPartNumber}-${part.unitPrice}`;
-                    if (!uniqueEntries.has(key)) {
-                        uniqueEntries.set(key, part);
+                    if (part.manufacturerPartNumber.toUpperCase() === searchedPartNumber.toUpperCase()) {
+                        const key = `${dataProvider}-${part.manufacturerPartNumber}-${part.unitPrice}`;
+                        if (!uniqueEntries.has(key)) {
+                            uniqueEntries.set(key, part);
+                            console.log(`Added entry: ${key}`);
+                        } else {
+                            console.log(`Duplicate entry not added: ${key}`);
+                        }
+                    } else {
+                        console.log(`Filtered out non-matching part: ${part.manufacturerPartNumber}`);
                     }
                 });
             };
@@ -97,7 +108,8 @@ const InputForm = () => {
                 description: part.Description,
                 mouser_part_number: part.MouserPartNumber
             }));
-            addUniqueEntries('Mouser', mouserData);
+            const filteredMouserData = filterExactMatches(mouserData, partNumber);
+            addUniqueEntries('Mouser', filteredMouserData, partNumber);
     
             // Process Rutronik data
             const rutronikData = (responses[1].data || []).map(part => {
@@ -109,10 +121,11 @@ const InputForm = () => {
                     volume: volume,
                     unitPrice: unitPrice,
                     totalPrice: unitPrice * volume,
-                    url: part.url // Include URL if necessary
+                    url: part.url
                 };
             });
-            addUniqueEntries('Rutronik', rutronikData);
+            const filteredRutronikData = filterExactMatches(rutronikData, partNumber);
+            addUniqueEntries('Rutronik', filteredRutronikData, partNumber);
     
             // Process Element14 data
             const element14Data = (responses[2].data.manufacturerPartNumberSearchReturn.products || []).map(part => {
@@ -126,15 +139,19 @@ const InputForm = () => {
                     totalPrice: convertToINR(price, 'USD') * volume
                 };
             });
-            addUniqueEntries('Element14', element14Data);
+            const filteredElement14Data = filterExactMatches(element14Data, partNumber);
+            addUniqueEntries('Element14', filteredElement14Data, partNumber);
     
             // Convert Map to array and sort results
             const allResults = Array.from(uniqueEntries.values());
             allResults.sort((a, b) => a.totalPrice - b.totalPrice);
     
+            console.log("Final filtered results:", allResults);
+    
             setResults(allResults);
         } catch (error) {
             setError(error);
+            console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
         }
